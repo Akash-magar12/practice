@@ -1,7 +1,6 @@
 import { userModel } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 export const registerUser = async (req, res) => {
-  console.log(req.cookies);
   try {
     const { username, email, password } = req.body;
 
@@ -31,7 +30,7 @@ export const registerUser = async (req, res) => {
     });
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-    res.cookie("token",token)
+    res.cookie("token", token);
 
     // 5. Success Response (201 is the standard for 'Created')
     res.status(201).json({
@@ -58,37 +57,44 @@ export const registerUser = async (req, res) => {
 
 export const loginUser = async (req, res) => {
   try {
-    // 1. Destructure login data from the request body
-    const { email, password, username } = req.body;
+    // 1. Destructure the combined identifier (email or username) and password
+    const { identifier, password } = req.body;
+    
+    // Log for debugging - this will now show the single input value
+    console.log("Login attempt:", identifier);
 
-    // 2. Search for the user by Email OR Username
-    // .select('+password') is used because 'select: false' is set in the Schema
+    // 2. Search for the user in the database
+    // The $or operator checks if the identifier matches either the email OR the username field
+    // We explicitly .select("+password") because it's hidden by default in our Schema
     const user = await userModel
       .findOne({
-        $or: [{ email }, { username }],
+        $or: [{ email: identifier }, { username: identifier }],
       })
       .select("+password");
 
-    // 3. Check if user exists
-    // IMPORTANT: You must use 'return' here so the code stops if the user is null
+    // 3. Security: If no user is found, stop and return an error
+    // Always use 'return' to prevent the code from continuing to the password check
     if (!user) {
       return res.status(400).json({
-        message: "Invalid credentials",
+        success: false,
+        message: "Invalid credentials", // Keep messages vague for security
       });
     }
 
-    // 4. Compare the provided password with the hashed password in the DB
-    // This calls the custom method we added to the userSchema
+    // 4. Verify Password
+    // Compares the plain-text password from req.body with the hashed password in DB
     const isMatch = await user.comparePassword(password);
 
-    // 5. If passwords don't match, stop and send an error
+    // 5. If passwords don't match, return the same error message as step 3
     if (!isMatch) {
       return res.status(400).json({
+        success: false,
         message: "Invalid credentials",
       });
     }
 
-    // 6. Success! Send back the user data (excluding the password)
+    // 6. Success Response
+    // We send back a success flag and user details (but NEVER the password)
     res.status(200).json({
       success: true,
       message: `Welcome back, ${user.username}!`,
@@ -98,8 +104,10 @@ export const loginUser = async (req, res) => {
         email: user.email,
       },
     });
+
   } catch (error) {
-    // 7. Catch block to handle unexpected server or database errors
+    // 7. Error Handling
+    // Catch-all for database connection issues or server crashes
     console.error("Login Error:", error.message);
 
     res.status(500).json({
