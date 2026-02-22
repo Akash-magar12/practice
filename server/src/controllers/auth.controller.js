@@ -59,7 +59,7 @@ export const loginUser = async (req, res) => {
   try {
     // 1. Destructure the combined identifier (email or username) and password
     const { identifier, password } = req.body;
-    
+
     // Log for debugging - this will now show the single input value
     console.log("Login attempt:", identifier);
 
@@ -92,7 +92,8 @@ export const loginUser = async (req, res) => {
         message: "Invalid credentials",
       });
     }
-
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+    res.cookie("token", token);
     // 6. Success Response
     // We send back a success flag and user details (but NEVER the password)
     res.status(200).json({
@@ -104,7 +105,6 @@ export const loginUser = async (req, res) => {
         email: user.email,
       },
     });
-
   } catch (error) {
     // 7. Error Handling
     // Catch-all for database connection issues or server crashes
@@ -114,6 +114,30 @@ export const loginUser = async (req, res) => {
       success: false,
       message: "Internal Server Error",
       error: error.message,
+    });
+  }
+};
+
+
+export const logOut = async (req, res) => {
+  try {
+    // 1. Target the 'token' cookie specifically
+    res.clearCookie("token", {
+      httpOnly: true,
+      // Helps prevent CSRF attacks
+      sameSite: "strict",
+      // Only set to true if you're on HTTPS (Production)
+    });
+
+    return res.status(200).json({ 
+      success: true, 
+      message: "Logged out successfully" 
+    });
+  } catch (error) {
+    console.error("Logout Error:", error);
+    return res.status(500).json({ 
+      success: false, 
+      message: "Internal server error during logout" 
     });
   }
 };

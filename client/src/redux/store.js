@@ -1,5 +1,6 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import userSlice from "./features/userSlice.js";
+import feedSlice from './features/feedSlice.js'
 import storage from 'redux-persist/lib/storage'; // Defaults to localStorage for web
 import { persistStore, persistReducer } from "redux-persist"; 
 
@@ -13,6 +14,7 @@ const persistConfig = {
 // 2. Combine all reducers into one root reducer
 const rootReducer = combineReducers({
   auth: userSlice, 
+  feed:feedSlice
 });
 
 // 3. Create a "persisted" version of our root reducer

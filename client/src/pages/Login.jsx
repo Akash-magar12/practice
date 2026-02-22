@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux"; // Added useSelector
 import api from "../utils/api";
 import toast from "react-hot-toast";
@@ -10,6 +10,7 @@ const Login = () => {
     identifier: "",
     password: "",
   });
+  const navigate = useNavigate()
 
   const dispatch = useDispatch();
   
@@ -35,7 +36,7 @@ const Login = () => {
       dispatch(loginSuccess(response.data.user));
       
       toast.success(response.data.message);
-      console.log(response.data);
+      navigate("/");
 
     } catch (error) {
       // 4. Failure! Reset loading and isAuthenticated to false

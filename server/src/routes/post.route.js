@@ -14,6 +14,6 @@ router.post("/create", authMiddleware, upload.single("image"), createPost);
 
 // 3. Protect the "Get" route
 // Only logged-in users can see posts
-router.get("/post", authMiddleware, getPost);
+router.get("/posts", authMiddleware, getPost);
 
 export default router;
