@@ -1,5 +1,6 @@
 import { userModel } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
+import generateTokenAndSetCookie from "../utils/generateToken.js";
 export const registerUser = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -29,8 +30,7 @@ export const registerUser = async (req, res) => {
       password,
     });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-    res.cookie("token", token);
+    generateTokenAndSetCookie(res, user._id);
 
     // 5. Success Response (201 is the standard for 'Created')
     res.status(201).json({
@@ -92,8 +92,7 @@ export const loginUser = async (req, res) => {
         message: "Invalid credentials",
       });
     }
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-    res.cookie("token", token);
+  generateTokenAndSetCookie(res, user._id);
     // 6. Success Response
     // We send back a success flag and user details (but NEVER the password)
     res.status(200).json({
